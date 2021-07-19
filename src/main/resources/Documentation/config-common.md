@@ -74,6 +74,33 @@ The association can be overridden at project level in the project.config
 using the same syntax used in the gerrit.config. Project's hierarchy will be respected
 when evaluating the links configuration and association policy.
 
+By setting a `commentlink`'s `serverRole` on the plugin's @PLUGIN@ configuration, it is possible
+to limit the action that the gerrit instance will take. This is useful in a replicated installation
+where multiple Gerrit sites will be responsible for enforcing that commit messages are associated with
+ITS tickets according to the `association` level, but only a single site should be responsible for acting on
+event triggers and updating the associated ITS ticket, i.e Posting comments and transitioning status.
+
+The following values are supported, (the default is `VALIDATE_AND_POST`):
+
+VALIDATE_AND_POST
+: This Gerrit instance will both validate that commit messages conform to the desired `association` level, and
+  will handle the action of any configured rules in `actions-@PLUGIN@.config`.
+
+VALIDATE_ONLY
+: This Gerrit instance will only validate that commit messages conform to the desired `association` level.
+
+Note: For a WANdisco replicated GerritMS installation, we recommend that a single site in the group be configured with
+VALIDATE_AND_POST and all remaining sites are VALIDATE_ONLY to avoid multiple sites posting to a single ITS.
+We provide the configuration option to allow easy replacement of the posting server in the event that a site goes
+down.
+
+Example:
+
+```
+[plugin @PLUGIN@]
+    serverRole = VALIDATE_AND_POST
+```
+
 ## Enabling ITS integration
 
 It can be configured per project whether the issue tracker
