@@ -43,6 +43,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.regex.Pattern;
+
+import com.googlesource.gerrit.plugins.its.base.workflow.ItsServerActionRole;
 import org.eclipse.jgit.lib.Config;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -236,6 +238,23 @@ public class ItsConfig {
             "commentlink", getCommentLinkName(), "association", ItsAssociationPolicy.OPTIONAL);
 
     return getPluginConfigEnum("association", legacyItsAssociationPolicy);
+  }
+
+  /**
+   * Get what role this server should take with its interaction:
+   *  - VALIDATE_AND_POST: Will respond to actions and post comments/transitions to the remote server. (default)
+   *  - VALIDATE_ONLY: Will only enforce commit messages to the necessary association level.
+   *
+   * @return Server Role
+   */
+  public ItsServerActionRole getItsServerRole() {
+    final String configKey = "serverRole";
+
+    ItsServerActionRole serverRole =
+        gerritConfig.getEnum(
+            "commentlink", getCommentLinkName(), configKey, ItsServerActionRole.VALIDATE_AND_POST);
+
+    return getPluginConfigEnum(configKey, serverRole);
   }
 
   private String getPluginConfigString(String key) {

@@ -58,7 +58,8 @@ public class ActionController implements EventListener {
     if (event instanceof RefEvent) {
       RefEvent refEvent = (RefEvent) event;
       ItsConfig.setCurrentProjectName(refEvent.getProjectNameKey());
-      if (itsConfig.isEnabled(refEvent)) {
+      log.debug("ITS Jira Plugin: This server role is " + itsConfig.getItsServerRole());
+      if (itsConfig.isEnabled(refEvent) && itsConfig.getItsServerRole() == ItsServerActionRole.VALIDATE_AND_POST) {
         handleEvent(refEvent);
       }
     }

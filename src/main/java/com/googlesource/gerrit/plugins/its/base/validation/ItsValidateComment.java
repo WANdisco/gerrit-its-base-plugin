@@ -29,6 +29,8 @@ import com.googlesource.gerrit.plugins.its.base.util.IssueExtractor;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
+import java.util.regex.Pattern;
+
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -117,18 +119,36 @@ public class ItsValidateComment implements CommitValidationListener {
           synopsis = "Missing issue-id in commit message";
 
           StringBuilder sb = new StringBuilder();
+
           sb.append("Commit ");
           sb.append(commit.getId().getName());
           sb.append(" not associated to any issue\n");
           sb.append("\n");
           sb.append("Hint: insert one or more issue-id anywhere in the ");
           sb.append("commit message.\n");
-          sb.append("      Issue-ids are strings matching ");
-          sb.append(itsConfig.getIssuePattern().pattern());
-          sb.append("\n");
-          sb.append("      and are pointing to existing tickets on ");
-          sb.append(pluginName);
-          sb.append(" Issue-Tracker");
+
+          // If we've got here and getIssuePattern is null we have some misconfiguration that we should flag up.
+          Pattern issuePattern = itsConfig.getIssuePattern();
+
+          if (issuePattern == null) {
+            // General error to client and configuration hint in log for admin user.
+            sb.append("      ").append(pluginName);
+            sb.append(" Issue-Tracker requires an issue pattern to validate commit messages, but none is defined in the Gerrit configuration.");
+            sb.append("\n");
+            sb.append("      Please contact a Gerrit admin to correct this.");
+
+            log.warn("ITS {} association policy is '{}' but no issue pattern has been defined in the plugin configuration. " +
+            "Correct this by adding a 'commentlink.match' key with regular expression to match ticket IDs, or set 'association = OPTIONAL'",
+                    pluginName, associationPolicy);
+          } else {
+            sb.append("      Issue-ids are strings matching ");
+            sb.append(issuePattern.pattern());
+            sb.append("\n");
+            sb.append("      and are pointing to existing tickets on ");
+            sb.append(pluginName);
+            sb.append(" Issue-Tracker");
+          }
+
           details = sb.toString();
 
           ret.add(commitValidationFailure(synopsis, details, ItsExistenceCheckResult.DOESNT_EXIST));
