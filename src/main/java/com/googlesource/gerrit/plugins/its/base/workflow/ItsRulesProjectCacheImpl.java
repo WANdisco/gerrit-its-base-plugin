@@ -14,6 +14,7 @@
 
 package com.googlesource.gerrit.plugins.its.base.workflow;
 
+import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableList;
@@ -22,10 +23,13 @@ import com.google.gerrit.entities.Project;
 import com.google.gerrit.extensions.events.GitReferenceUpdatedListener;
 import com.google.gerrit.extensions.registration.DynamicSet;
 import com.google.gerrit.server.cache.CacheModule;
+import com.google.gerrit.server.cache.ReplicatedCache;
 import com.google.gerrit.server.project.ProjectCache;
 import com.google.gerrit.server.project.ProjectState;
+import com.google.gerrit.server.replication.coordinators.ReplicatedEventsCoordinator;
 import com.google.inject.Inject;
 import com.google.inject.Module;
+import com.google.inject.Provider;
 import com.google.inject.Singleton;
 import com.google.inject.TypeLiteral;
 import com.google.inject.name.Named;
@@ -39,13 +43,14 @@ import org.eclipse.jgit.lib.Config;
 @Singleton
 public class ItsRulesProjectCacheImpl implements ItsRulesProjectCache {
   private static final FluentLogger logger = FluentLogger.forEnclosingClass();
+  @ReplicatedCache
   private static final String CACHE_NAME = "its_rules_project";
 
   private final LoadingCache<String, List<Rule>> cache;
 
   @Inject
-  ItsRulesProjectCacheImpl(@Named(CACHE_NAME) LoadingCache<String, List<Rule>> cache) {
-    this.cache = cache;
+  ItsRulesProjectCacheImpl(@Named(CACHE_NAME) LoadingCache<String, List<Rule>> cache, Provider<ReplicatedEventsCoordinator> replicatedEventsCoordinator) {
+    this.cache = replicatedEventsCoordinator.get().createReplicatedLoadingCache(CACHE_NAME, cache, projectName -> projectName);
   }
 
   @Override
