@@ -8,6 +8,9 @@ load(
 
 gerrit_plugin(
     name = "its-base",
+    manifest_entries = [
+        "Gerrit-PluginName: its-base",
+    ],
     srcs = glob(["src/main/java/**/*.java"]),
     resources = glob(["src/main/resources/**/*"]),
 )
