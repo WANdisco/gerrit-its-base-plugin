@@ -30,6 +30,8 @@ import com.google.inject.Injector;
 import com.googlesource.gerrit.plugins.its.base.its.ItsConfig;
 import com.googlesource.gerrit.plugins.its.base.testutil.LoggingMockingTestCase;
 import com.googlesource.gerrit.plugins.its.base.util.PropertyExtractor;
+import org.apache.log4j.Level;
+
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -39,6 +41,8 @@ import java.util.Set;
 public class ActionControllerTest extends LoggingMockingTestCase {
   private static Project.NameKey testProjectName = Project.nameKey("test-project");
   private Injector injector;
+
+  private static final String SERVER_ROLE_LOG_MESSAGE = "ITS Jira Plugin: This server role is ";
 
   private PropertyExtractor propertyExtractor;
   private RuleBase ruleBase;
@@ -56,6 +60,7 @@ public class ActionControllerTest extends LoggingMockingTestCase {
     when(event.getProjectNameKey()).thenReturn(testProjectName);
 
     actionController.onEvent(event);
+    assertLogMessageContains(SERVER_ROLE_LOG_MESSAGE, Level.DEBUG);
   }
 
   public void testNoActionsOrNoIssues() {
@@ -80,6 +85,7 @@ public class ActionControllerTest extends LoggingMockingTestCase {
         .thenThrow(new UnsupportedOperationException("Method called more than twice"));
 
     actionController.onEvent(event);
+    assertLogMessageContains(SERVER_ROLE_LOG_MESSAGE, Level.DEBUG);
   }
 
   public void testSinglePropertyMapSingleIssueActionSingleProjectAction() {
@@ -117,6 +123,8 @@ public class ActionControllerTest extends LoggingMockingTestCase {
 
     verify(actionExecutor).executeOnIssue(issueActionRequests, issueProperties);
     verify(actionExecutor).executeOnProject(projectActionRequests, projectProperties);
+
+    assertLogMessageContains(SERVER_ROLE_LOG_MESSAGE, Level.DEBUG);
   }
 
   public void testMultiplePropertyMapsMultipleActionMultipleIssue() {
@@ -151,6 +159,8 @@ public class ActionControllerTest extends LoggingMockingTestCase {
 
     verify(actionExecutor).executeOnIssue(actionRequests1, properties1);
     verify(actionExecutor).executeOnIssue(actionRequests2, properties2);
+
+    assertLogMessageContains(SERVER_ROLE_LOG_MESSAGE, Level.DEBUG);
   }
 
   private ActionController createActionController() {
@@ -159,6 +169,7 @@ public class ActionControllerTest extends LoggingMockingTestCase {
 
   private void setupCommonMocks() {
     when(itsConfig.isEnabled(any(RefEvent.class))).thenReturn(true);
+    when(itsConfig.getItsServerRole()).thenReturn(ItsServerActionRole.VALIDATE_AND_POST);
   }
 
   @Override
